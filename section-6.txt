@@ -29,14 +29,17 @@
    thus possibly treating invalid routes as valid, or vice versa.
 
    The processing described below is designed to cause all RPs with
-   access to the same local cache and RPKI repository data to achieve
-   the same results with regard to validation of RPKI data.  However, in
+   access to the same local cache and RPKI repository data to acquire
+   the same set of validated repository files. It does not ensure that
+   the RPs will achieve the same results with regard to validation of
+   RPKI data, since that depends on how each RP resolves any conflicts
+   that may arise in processing the retrieved files. Moreover, in
    operation, different RPs will access repositories at different times,
    and some RPs may experience local cache failures, so there is no
    guarantee that all RPs will achieve the same results with regard to
-   validation of RPKI data.
+   acquisition or validation of RPKI data.
 
-   Note that there is a "chicken and egg" relationship between the
+   Note also that there is a "chicken and egg" relationship between the
    manifest and the CRL for a given CA instance.  If the EE certificate
    for the current manifest is revoked, i.e., it appears in the current
    CRL, then the CA or publication point manager has made a serious
@@ -45,10 +48,6 @@
    acquired during a fetch, the fetch has failed; proceed to
    Section 6.7, because the CRL is considered missing.
 
-   Note that if a CA and its associated publication point are operating
-   properly, there will always be exactly one manifest and one
-   associated CRL at the publication point identified in the CA's SIA
-   (see below).
 
 6.1.  Manifest Processing Overview
 
@@ -57,7 +56,7 @@
    acceptable.  The tests described below (Section 6.2 to Section 6.6)
    are to be performed using the manifest identified by the id-ad-
    rpkiManifest URI extracted from a CA certificate's SIA.  All of the
-   files referenced by the manifest MUST be be located at the
+   files referenced by the manifest MUST be located at the
    publication point specified by the id-ad-caRepository URI from the
    (same) CA certificate's SIA.  The manifest and the files it
    references MUST reside at the same publication point.  If an RP
@@ -65,12 +64,6 @@
    the same publication point as the manifest the RP MUST treat the
    fetch as failed, and a warning MUST be issued (see Section 6.7
    below).
-
-   A manifest SHOULD contain exactly one CRL (.crl) file and it MUST be
-   at the location specified in the CRLDP in the manifest's EE
-   certificate.  If more than one .crl file appears in the manifest, the
-   fetch has failed and the RP MUST proceed to Section 6.7; otherwise
-   proceed to Section 6.2.
 
    Note that, during CA key rollover [RFC6489], signed objects for two
    or more different CA instances will appear at the same publication
@@ -97,21 +90,16 @@
    fetch and RP MUST proceed to Section 6.7; otherwise proceed to
    Section 6.4.
 
+
+
 6.4.  Acquiring Files Referenced by a Manifest
 
    The RP MUST acquire all of the files enumerated in the manifest
-   (fileList) from the publication point.  If there are files listed in
-   the manifest that cannot be retrieved from the publication point, or
-   if they fail the validity tests specified in [RFC6488], the fetch has
-   failed and the RP MUST proceed to Section 6.7; otherwise, proceed to
-   Section 6.5.  Note that all RPs MUST be able to process Manifests,
-   CRLs and Resource Certificates [RFC6487], BGPsec Router Certificates
-   [RFC8209], Ghostbuster Records [RFC6493], and ROAs [RFC6482].  The
-   set of retrieved objects may include other RPKI object types that the
-   RP is not prepared to process.  When such objects are encountered by
-   an RP, the RP MUST NOT attempt to validate the eContent (as described
-   in Section 2.1.3.2 of [RFC8488]) of such objects; encountering such
-   objects does not, per se, result in a failed fetch.
+   (fileList) from the publication point. If there are files listed in
+   the manifest that cannot be retrieved from the publication point, the
+   fetch has failed and the RP MUST proceed to Section 6.7; otherwise,
+   proceed to Section 6.5
+
 
 6.5.  Matching File Names and Hashes
 
@@ -131,16 +119,15 @@
 
 6.7.  Failed Fetches
 
-   If a fetch fails for any of the reasons cited in
-   Section 6.2-Section 6.6, the RP MUST issue a warning indicating the
-   reason(s) for termination of processing with regard to this CA
-   instance.  It is RECOMMENDED that a human operator be notified of
-   this warning.
+   If a fetch fails for any of the reasons cited in 6.2-6.6, the RP MUST
+   issue a warning indicating the reason(s)for termination of processing
+   with regard to this CA instance.  It is RECOMMENDED that a human
+   operator be notified of this warning.
 
    Termination of processing means that the RP SHOULD continue to use
    cached versions of the objects associated with this CA instance,
    until such time as they become stale or they can be replaced by
-   objects from a successful fetch.This implies that the RP MUST not try
-   to acquire and validate subordinate signed objects, e.g., subordinate
-   CA certificates, until the next interval when the RP is scheduled to
-   fetch and process data for this CA instance.
+   objects from a successful fetch.  This implies that the RP MUST not
+   try to acquire and validate subordinate signed objects, e.g.,
+   subordinate CA certificates, until the next interval when the RP is
+   scheduled to fetch and process data for this CA instance.
